@@ -1,4 +1,5 @@
 #include "audio_config.h"
+#include "file_manager.h"
 #include "M5Cardputer.h"
 #include "driver/i2s.h"
 #include <Wire.h>
@@ -12,6 +13,17 @@ int hpDetectPin = CARDPUTER_HP_DET_PIN;
 int ampEnablePin = CARDPUTER_AMP_EN_PIN;
 bool lastHPState = false;
 bool codec_initialized = false;
+
+void stopCommand() {
+    audio.stopSong();
+    isPlaying = false;
+    stoped = true;
+}
+
+void pauseCommand() {
+    isPlaying = false;
+    stoped = true;
+}
 
 static bool es8311_write(uint8_t reg, uint8_t val) {
     uint8_t data = val;
@@ -94,7 +106,6 @@ bool initES8311Codec() {
     Wire.setTimeOut(50);
     delay(10);
     
-    // Настройка пинов управления
     if (hpDetectPin >= 0) {
         pinMode(hpDetectPin, INPUT_PULLUP);
     }
@@ -103,8 +114,7 @@ bool initES8311Codec() {
         digitalWrite(ampEnablePin, LOW);
         Serial.printf("AMP_EN: held LOW on pin %d until codec init\n", ampEnablePin);
     }
-    
-    // Инициализация ES8311
+
     struct RegisterValue {
         uint8_t reg;
         uint8_t value;
@@ -132,8 +142,7 @@ bool initES8311Codec() {
     Serial.printf("Audio pins: I2C SDA=%d SCL=%d, BCLK=%d LRCK=%d DOUT=%d\n",
                   CARDPUTER_I2C_SDA, CARDPUTER_I2C_SCL, 
                   CARDPUTER_I2S_BCLK, CARDPUTER_I2S_LRCK, CARDPUTER_I2S_DOUT);
-    
-    // Проверка наушников и управление усилителем
+
     if (hpDetectPin >= 0) {
         bool hpInserted = (digitalRead(hpDetectPin) == LOW);
         lastHPState = hpInserted;
@@ -147,10 +156,8 @@ bool initES8311Codec() {
         digitalWrite(ampEnablePin, HIGH);
     }
     
-    // Тестовый тон
     playTestTone(440, 1500, 44100, 12000);
-    
-    // Настройка библиотеки Audio
+
     audio.setPinout(CARDPUTER_I2S_BCLK, CARDPUTER_I2S_LRCK, CARDPUTER_I2S_DOUT);
     audio.setVolume(volume);
     audio.setBalance(0);

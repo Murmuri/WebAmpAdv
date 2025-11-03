@@ -19,6 +19,8 @@ extern int sliderPos;
 extern int textPos;
 extern int graphSpeed;
 extern int g[14];
+extern bool volumeUpdateRequest;
+extern bool nextTrackRequest;
 extern unsigned short grays[18];
 extern unsigned short gray;
 extern unsigned short light;

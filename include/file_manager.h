@@ -21,7 +21,7 @@ extern String availableFolders[];
 extern int folderCount;
 
 bool initSDCard();
-void scanAvailableFolders();
+void scanAvailableFolders(const String& folder);
 void listAudioFiles(const String& folder);
 String getFileName(int index);
 

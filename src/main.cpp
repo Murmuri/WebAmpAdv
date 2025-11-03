@@ -10,8 +10,6 @@
 TaskHandle_t handleAudioTask = NULL;
 TaskHandle_t handleUITask = NULL;
 
-static int nextTrackRequest = 0;
-static bool volumeUpdateRequest = false;
 static ESP32Time rtc(0);
 
 void Task_TFT(void *pvParameters);
@@ -20,7 +18,7 @@ void audio_eof_mp3(const char *info);
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("=== M5 Cardputer Advanced MP3 Player ===");
+    Serial.println("=== Mini MP3 Player for Cardputer Adv ===");
 
     auto cfg = M5.config();
     cfg.serial_baudrate = 115200;
@@ -46,14 +44,14 @@ void setup() {
         Serial.println("ERROR: Audio codec initialization failed!");
     }
 
-    scanAvailableFolders();
+    scanAvailableFolders("/");
     
     Serial.printf("Found %d folders\n", folderCount);
     Serial.printf("Memory info: Free heap=%d, Min free=%d\n", 
                   ESP.getFreeHeap(), ESP.getMinFreeHeap());
 
-    xTaskCreatePinnedToCore(Task_TFT, "Task_TFT", 20480, NULL, 2, &handleUITask, 0);     // Core 0
-    xTaskCreatePinnedToCore(Task_Audio, "Task_Audio", 10240, NULL, 3, &handleAudioTask, 1); // Core 1
+    xTaskCreatePinnedToCore(Task_TFT, "Task_TFT", 20480, NULL, 2, &handleUITask, 0);
+    xTaskCreatePinnedToCore(Task_Audio, "Task_Audio", 10240, NULL, 3, &handleAudioTask, 1);
     
     Serial.println("Setup complete. Ready to play!");
 }
@@ -64,7 +62,7 @@ void loop() {
 }
 
 void Task_TFT(void *pvParameters) {
-  while (1) {
+  while (true) {
     M5Cardputer.update();
 
     if (M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) {
@@ -72,25 +70,9 @@ void Task_TFT(void *pvParameters) {
 
       for (auto ch : ks.word) {
         handleKeyPress(ch);
-
-        if (currentUIState == UI_PLAYER) {
-          if (ch == 'n' || ch == 'p' || ch == 'b') {
-            nextTrackRequest = 1;
-            isPlaying = true;
-            stoped = false;
-          }
-          if (ch == 'v') {
-            volumeUpdateRequest = true;
-          }
-        }
       }
 
       if (ks.enter) {
-        if (currentUIState == UI_PLAYER) {
-          nextTrackRequest = 1;
-          isPlaying = true;
-          stoped = false;
-        }
         handleKeyPress('\n');
       }
 
@@ -170,6 +152,6 @@ void audio_eof_mp3(const char *info) {
         }
         
         Serial.printf("Auto-advancing to next track: %s\n", audioFiles[currentFileIndex].c_str());
-        nextTrackRequest = 1;
+        nextTrackRequest = true;
     }
 }

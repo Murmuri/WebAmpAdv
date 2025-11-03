@@ -9,24 +9,22 @@ UIState currentUIState = UI_FOLDER_SELECT;
 M5Canvas sprite(&M5Cardputer.Display);
 M5Canvas spr(&M5Cardputer.Display);
 
-#define KEY_ESC 27
-#define KEY_DEL 127
-#define KEY_ENTER 59
-#define KEY_UP    0x80
-#define KEY_DOWN  0x81
-
 int bri = 2;
 int brightness[5] = {60, 120, 180, 220, 255};
 int sliderPos = 0;
 int textPos = 90;
 int graphSpeed = 0;
 int g[14] = {0};
+bool volumeUpdateRequest = false;
+bool nextTrackRequest = false;
 unsigned short grays[18];
 unsigned short gray;
 unsigned short light;
 
+static bool inFolder = false;
 static int selectedFolderIndex = 0;
 static int folderConfirmIndex = 0;
+static int selectedFileIndex = 0;
 static ESP32Time rtc(0);
 
 void initUI() {
@@ -228,7 +226,7 @@ void drawPlayer() {
         sprite.setTextColor(GREEN, BLACK);
         sprite.setFont(&DSEG7_Classic_Mini_Regular_16);
         if (!stoped)
-            sprite.drawString(rtc.getTime().substring(3, 8), 172, 18);
+            sprite.drawString(getPlaybackTimeString(), 172, 18);
         sprite.setTextFont(0);
 
         int percent = getBatteryPercent();
@@ -272,67 +270,90 @@ void draw() {
 
 void handleKeyPress(char key) {
     if (currentUIState == UI_FOLDER_SELECT) {
-        if (key == ';' || key == KEY_UP) {
+        int maxIndex = folderCount;
+        if (key == ';') {
             selectedFolderIndex--;
-            if (selectedFolderIndex < 0) selectedFolderIndex = folderCount - 1;
-        } else if (key == '.' || key == KEY_DOWN) {
+            if (selectedFolderIndex < 0) selectedFolderIndex = maxIndex - 1;
+        } else if (key == '.') {
             selectedFolderIndex++;
-            if (selectedFolderIndex >= folderCount) selectedFolderIndex = 0;
-        } else if (key == KEY_ENTER) {
-            folderConfirmIndex = selectedFolderIndex;
-            currentUIState = UI_FOLDER_CONFIRM;
+            if (selectedFolderIndex >= maxIndex) selectedFolderIndex = 0;
+        } else if (key == '\n') {
+            if (selectedFolderIndex == folderCount) {
+                String chosenFolder = currentFolder;
+                listAudioFiles(currentFolder);
+                currentFileIndex = 0;
+                currentUIState = UI_PLAYER;
+                isPlaying = true;
+                stoped = false;
+                textPos = 90;
+            } else {
+                currentFolder = availableFolders[selectedFolderIndex];
+                scanAvailableFolders(currentFolder);
+                selectedFolderIndex = 0;
+            }
+        } else if (key == '`' || key == '\b') {
+            if (currentFolder != "/") {
+                int lastSlash = currentFolder.lastIndexOf('/');
+                if (lastSlash > 0)
+                    currentFolder = currentFolder.substring(0, lastSlash);
+                else
+                    currentFolder = "/";
+                scanAvailableFolders(currentFolder);
+                selectedFolderIndex = 0;
+            }
         }
     }
-    else if (currentUIState == UI_FOLDER_CONFIRM) {
-        if (key == KEY_ENTER) {
-            listAudioFiles(availableFolders[folderConfirmIndex]);
-            currentFileIndex = 0;
-            currentUIState = UI_PLAYER;
-            textPos = 90;
-            rtc.setTime(0, 0, 0, 17, 1, 2021);
-        } else if (key == KEY_ESC || key == KEY_DEL) {
-            currentUIState = UI_FOLDER_SELECT;
-        }
-    } 
     else {
-        if (key == KEY_ESC || key == KEY_DEL) {
+        if (key == '`' || key == '\b') {
             audio.stopSong();
             isPlaying = false;
             stoped = true;
             currentUIState = UI_FOLDER_SELECT;
             selectedFolderIndex = 0;
-            scanAvailableFolders();
+            scanAvailableFolders("/");
         } else if (key == 'a') {
-            isPlaying = !isPlaying;
-            stoped = !stoped;
+            if (isPlaying && !stoped) {
+                isPlaying = false;
+                stoped = true;
+            } else {
+                isPlaying = true;
+                stoped = false;
+            }
         } else if (key == 'v') {
-            volume += 5;
-            if (volume > 20) volume = 5;
-            audio.setVolume(volume);
+            //volume += 5;
+            //if (volume > 20) volume = 5;
+            //audio.setVolume(volume);
+            volumeUpdateRequest = true;
         } else if (key == 'l') {
             bri++;
             if (bri == 5) bri = 0;
             M5Cardputer.Display.setBrightness(brightness[bri]);
         } else if (key == 'n') {
-            rtc.setTime(0, 0, 0, 17, 1, 2021);
-            textPos = 90;
             currentFileIndex++;
             if (currentFileIndex >= fileCount) currentFileIndex = 0;
+            rtc.setTime(0, 0, 0, 1, 10, 2025);
+            textPos = 90;
+            nextTrackRequest = true;
         } else if (key == 'p') {
-            rtc.setTime(0, 0, 0, 17, 1, 2021);
-            textPos = 90;
             currentFileIndex--;
             if (currentFileIndex < 0) currentFileIndex = fileCount - 1;
+            rtc.setTime(0, 0, 0, 1, 10, 2025);
+            textPos = 90;
+            nextTrackRequest = true;
         } else if (key == ';') {
-            currentFileIndex--;
-            if (currentFileIndex < 0) currentFileIndex = fileCount - 1;
+            selectedFileIndex = selectedFileIndex - 1;
+            if (selectedFileIndex < 0) selectedFileIndex = fileCount - 1;
         } else if (key == '.') {
-            currentFileIndex++;
-            if (currentFileIndex >= fileCount) currentFileIndex = 0;
-        } else if (key == 'b') {
-            rtc.setTime(0, 0, 0, 17, 1, 2021);
-            textPos = 90;
+            selectedFileIndex++;
+            if (selectedFileIndex >= fileCount) selectedFileIndex = 0;  
+        } else if (key == '\n') {
+            currentFileIndex = selectedFileIndex;
+            nextTrackRequest = true;
+        }else if (key == 'r') {
+            rtc.setTime(0, 0, 0, 1, 10, 2025);
             currentFileIndex = random(0, fileCount);
+            textPos = 90;
+            nextTrackRequest = true;
         }
     }
 }

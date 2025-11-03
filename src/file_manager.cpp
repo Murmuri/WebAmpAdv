@@ -18,24 +18,28 @@ bool initSDCard() {
     return true;
 }
 
-void scanAvailableFolders() {
+void scanAvailableFolders(const String& folder = "/") {
     folderCount = 0;
-    Serial.println("Scanning for folders with audio files...");
+    Serial.printf("Scanning for folders in: %s\n", folder.c_str());
 
-    availableFolders[folderCount++] = "/";
+    availableFolders[folderCount++] = folder;
 
-    File root = SD.open("/");
+    File root = SD.open(folder);
     if (!root || !root.isDirectory()) {
-        Serial.println("Failed to open root directory");
+        Serial.println("Failed to open folder");
         return;
     }
-    
+
     File file = root.openNextFile();
     while (file && folderCount < 20) {
         if (file.isDirectory()) {
             String dirname = String(file.name());
             if (!dirname.startsWith("/")) {
-                dirname = "/" + dirname;
+                if (folder == "/") {
+                    dirname = "/" + dirname;
+                } else {
+                    dirname = folder + "/" + dirname;
+                }
             }
             Serial.printf("Found folder: %s\n", dirname.c_str());
             availableFolders[folderCount++] = dirname;
@@ -43,10 +47,9 @@ void scanAvailableFolders() {
         file = root.openNextFile();
     }
     root.close();
-    
+
     Serial.printf("Total folders found: %d\n", folderCount);
 }
-
 void listAudioFiles(const String& folder) {
     fileCount = 0;
     currentFolder = folder;
