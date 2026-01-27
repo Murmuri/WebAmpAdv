@@ -37,7 +37,7 @@ void loop() {
 
 void Task_TFT(void *pvParameters) {
     initUI();
-    // getLinksList();
+    getLinksList();
     
     while (true) {
         M5Cardputer.update();

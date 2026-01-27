@@ -28,8 +28,8 @@ extern uint8_t currentLinkIndex;
 
 extern SemaphoreHandle_t sdMutex;
 
-// bool initSDCard();
-// void getLinksList();
+bool initSDCard();
+void getLinksList();
 String getFileName(uint8_t index);
 
 #endif

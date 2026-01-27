@@ -155,6 +155,8 @@ bool initES8311Codec() {
     playTestTone(440, 1500, 44100, 12000);
 
     audio.setPinout(CARDPUTER_I2S_BCLK, CARDPUTER_I2S_LRCK, CARDPUTER_I2S_DOUT);
+    audio.setBufsize(8192, 1024);
+    audio.setConnectionTimeout(10000, 10000);
     changeVolume(volume);
     audio.setBalance(0);
     

@@ -36,8 +36,3 @@ punkrockers-radio ,http://stream.punkrockers-radio.de:8000/prr.mp3
 K-ROCK Radio,http://ice10.fluidstream.net:8080/ric.mp3
 Radio Swiss Schlager,http://relay.publicdomainradio.org/swiss_schlager.mp3
 Radio METEOR Belgium,http://icecast.movemedia.be:8000/meteor
-Radio HARANA Manila,http://ice.streams.ovh:1690/stream
-Radio Bremen,http://icecast.radiobremen.de/rb/bremenvier/live/mp3/64/stream.mp3
-Staroe Radio Music, https://www.staroeradio.ru/radio/music128
-Staroe Radio Kids, https://www.staroeradio.ru/radio/detskoe128
-Staroe Radio, https://www.staroeradio.ru/radio/ices128
