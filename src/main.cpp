@@ -4,6 +4,7 @@
 #include "file_manager.h"
 #include "ui_manager.h"
 #include <utility/Keyboard/KeyboardReader/TCA8418.h>
+#include "CardWifiSetup.h"
 
 TaskHandle_t handleUITask = NULL;
 TaskHandle_t handleAudioTask = NULL;
@@ -19,10 +20,11 @@ void setup() {
     cfg.internal_spk = false;
     M5Cardputer.begin(cfg, true);
 
+    connectToWiFi();
+
     Serial.println("Configuring TCA8418 keyboard driver");
     std::unique_ptr<KeyboardReader> reader(new TCA8418KeyboardReader());
     M5Cardputer.Keyboard.begin(std::move(reader));
-
 
     xTaskCreatePinnedToCore(Task_TFT, "Task_TFT", 20480, NULL, 2, &handleUITask, 0);
     xTaskCreatePinnedToCore(Task_Audio, "Task_Audio", 12288, NULL, 3, &handleAudioTask, 1);
@@ -35,16 +37,25 @@ void loop() {
 
 void Task_TFT(void *pvParameters) {
     initUI();
-    initSDCard();
-    scanDirectory(currentFolder);
+    // getLinksList();
     
     while (true) {
         M5Cardputer.update();
+
         if (M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) {
             Keyboard_Class::KeysState ks = M5Cardputer.Keyboard.keysState();
-            for (auto ch : ks.word) handleKeyPress(ch);
-            if (ks.enter) handleKeyPress('\n');
-            if (ks.del) handleKeyPress('\b');
+
+            for (auto ch : ks.word) {
+                handleKeyPress(ch);
+            }
+
+            if (ks.enter) {
+                handleKeyPress('\n');
+            }
+
+            if (ks.del) {
+                handleKeyPress('\b');
+            }
         }
 
         draw();
@@ -59,54 +70,54 @@ void Task_Audio(void *pvParameters) {
 
     const TickType_t playDelay = pdMS_TO_TICKS(1);
     const TickType_t idleDelay = pdMS_TO_TICKS(20);
+
     unsigned long lastLog = 0;
 
     while (true) {
-        if (nextTrackRequest && fileCount > 0) {
+        if (nextLinkRequest && linksCount > 0) {
             audio.stopSong();
             trackStartMillis = millis();
             playbackTime = 0;
 
-            const String &trackPath = audioFiles[currentFileIndex];
-            Serial.printf("[Task_Media] Loading track %d: %s\n", currentFileIndex, trackPath.c_str());
+            const String &trackLink = audioLinks[currentLinkIndex].url;
+            Serial.printf("[Task_Media] Loading track %d: %s\n", currentLinkIndex, trackLink);
 
-            if (SD.exists(trackPath)) {
-                if (codec_initialized) {
-                    if (audio.connecttoFS(SD, trackPath.c_str())) {
-                        Serial.println("[Task_Media] Track connected successfully.");
-                        isPlaying = true;
-                        isStoped = false;
-                    } else {
-                        Serial.println("ERROR: Failed to connect track to codec.");
-                        isPlaying = false;
-                        isStoped = true;
-                    }
+            if (codec_initialized) {
+                if (audio.connecttohost(trackLink.c_str())) {
+                    Serial.println("[Task_Media] Track connected successfully.");
+                    isPlaying = true;
+                    isStoped = false;
                 } else {
-                    Serial.println("WARNING: Codec not initialized, cannot play track.");
+                    Serial.println("ERROR: Failed to connect track to codec.");
                     isPlaying = false;
                     isStoped = true;
                 }
             } else {
-                Serial.println("ERROR: Track file not found on SD.");
+                Serial.println("WARNING: Codec not initialized, cannot play track.");
                 isPlaying = false;
                 isStoped = true;
             }
-            nextTrackRequest = false;
+            
+            nextLinkRequest = false;
         }
 
-        if (currentUIState == UI_PLAYER && isPlaying && codec_initialized && !isStoped && fileCount > 0) {
+        if (codec_initialized && !isStoped && linksCount > 0) {
             audio.loop();
 
             if (!audio.isRunning()) {
-                Serial.printf("[Task_Media] Track %d ended, auto-advancing.\n", currentFileIndex);
-                currentFileIndex++;
-                if (currentFileIndex >= fileCount) currentFileIndex = 0;
-                nextTrackRequest = true;
+                Serial.printf("[Task_Media] Track %d ended, auto-advancing.\n", currentLinkIndex);
+                currentLinkIndex++;
+
+                if (currentLinkIndex >= linksCount) {
+                    currentLinkIndex = 0;
+                }
+
+                nextLinkRequest = true;
             }
 
             if (millis() - lastLog >= 5000) {
                 Serial.printf("[Task_Media] Playing %d/%d, volume=%d, elapsed=%lu ms\n",
-                              currentFileIndex + 1, fileCount, volume, millis() - trackStartMillis);
+                              currentLinkIndex + 1, linksCount, volume, millis() - trackStartMillis);
                 lastLog = millis();
             }
             vTaskDelay(playDelay);
@@ -118,10 +129,15 @@ void Task_Audio(void *pvParameters) {
 
 void audio_eof_mp3(const char *info) {
     Serial.printf("eof_mp3: %s\n", info);
-    if (currentUIState == UI_PLAYER && fileCount > 0) {
-        currentFileIndex++;
-        if (currentFileIndex >= fileCount) currentFileIndex = 0;
-        Serial.printf("Auto-advancing to next: %s\n", audioFiles[currentFileIndex].c_str());
-        nextTrackRequest = true;
+
+    if (linksCount > 0) {
+        currentLinkIndex++;
+
+        if (currentLinkIndex >= linksCount) {
+            currentLinkIndex = 0;
+        }
+
+        Serial.printf("Auto-advancing to next: %s\n", audioLinks[currentLinkIndex].url.c_str());
+        nextLinkRequest = true;
     }
 }

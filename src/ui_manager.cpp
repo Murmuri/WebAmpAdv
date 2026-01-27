@@ -3,13 +3,12 @@
 #include "file_manager.h"
 #include "audio_config.h"
 
-UIState currentUIState = UI_FOLDER_SELECT;
 M5Canvas sprite1(&M5Cardputer.Display);
 M5Canvas sprite2(&M5Cardputer.Display);
 M5Canvas overlaySprite(&M5Cardputer.Display);
 
-bool nextTrackRequest = false;
-const uint8_t VISIBLE_FILE_COUNT = 10;
+bool nextLinkRequest = false;
+const uint8_t VISIBLE_LINK_COUNT = 10;
 constexpr unsigned long HOLD_DELAY = 1500;
 constexpr int SCROLL_SPEED = 1;
 
@@ -36,6 +35,7 @@ void initUI() {
     sprite2.createSprite(86, 16);
 
     uint8_t co = 214;
+
     for (uint8_t i = 0; i < 18; i++) {
         grays[i] = M5Cardputer.Display.color565(co, co, co + 40);
         co = co - 13;
@@ -44,13 +44,17 @@ void initUI() {
 
 String getPlaybackTimeString() {
     unsigned long elapsed = playbackTime;
-    if (isPlaying && !isStoped) elapsed = millis() - trackStartMillis;
+
+    if (isPlaying && !isStoped) {
+        elapsed = millis() - trackStartMillis;
+    }
     
     unsigned int seconds = (elapsed / 1000) % 60;
     unsigned int minutes = (elapsed / 1000) / 60;
 
     char buf[6];
     sprintf(buf, "%02u:%02u", minutes, seconds);
+
     return String(buf);
 }
 
@@ -81,90 +85,6 @@ void updateMarquee(bool active, const String& text) {
     }
 }
 
-void drawFolderSelect() {
-    gray = grays[15];
-    light = grays[10];
-
-    sprite1.fillRect(0, 0, 240, 135, gray);
-    sprite1.drawRoundRect(0, 0, 240, 135, 4, light);
-
-    sprite1.setTextFont(1);
-    sprite1.setTextColor(ORANGE, gray);
-    sprite1.setTextDatum(4);
-    sprite1.drawString("Select Folder", 75, 10);
-
-    sprite1.fillRoundRect(10, 22, 220, 20, 4, grays[12]);
-    sprite1.setTextFont(1);
-    sprite1.setTextColor(WHITE, grays[12]);
-    sprite1.setTextDatum(0);
-    sprite1.drawString(currentFolder, 16, 27);
-
-    sprite1.setTextFont(0);
-    sprite1.setTextColor(GREEN, gray);
-    sprite1.setTextDatum(2);
-    sprite1.drawString("[Audios: " + String(fileCount) + "]", 230, 12);
-
-    sprite1.setTextFont(0);
-    sprite1.setTextDatum(0);
-    sprite1.setTextColor(grays[5], gray);
-    sprite1.drawString("[;]/[.]-Nav   [ok]-Open   [Esc]-Back", 10, 122);
-
-    sprite1.setTextFont(1);
-
-    const int startY = 48;
-    const int lineHeight = 14;
-    const int maxVisible = 5;
-
-    const bool hasParent = (currentFolder != "/");
-    const int baseParent = hasParent ? 1 : 0;
-    const int totalItems = baseParent + folderCount + 1;
-
-    if (selectedFolderIndex < 0) selectedFolderIndex = 0;
-    if (selectedFolderIndex >= totalItems) selectedFolderIndex = totalItems - 1;
-
-    int scrollStart = selectedFolderIndex - (maxVisible / 2);
-    if (scrollStart < 0) scrollStart = 0;
-    if (scrollStart + maxVisible > totalItems) scrollStart = max(0, totalItems - maxVisible);
-
-    int y = startY;
-    for (int i = 0; i < maxVisible && (scrollStart + i) < totalItems; ++i) {
-        int idxGlobal = scrollStart + i;
-        bool isSelected = (idxGlobal == selectedFolderIndex);
-
-        bool isParentButton = hasParent && (idxGlobal == 0);
-        bool isConfirmButton = (idxGlobal == totalItems - 1);
-        bool isFolderItem = !isParentButton && !isConfirmButton;
-
-        String displayName;
-        if (isParentButton) {
-            displayName = "..";
-        } else if (isConfirmButton) {
-            displayName = " > Select this folder";
-        } else {
-            int folderIndex = idxGlobal - baseParent;
-            if (folderIndex >= 0 && folderIndex < folderCount) {
-                displayName = availableFolders[folderIndex];
-                int lastSlash = displayName.lastIndexOf('/');
-                if (lastSlash >= 0) displayName = displayName.substring(lastSlash + 1);
-            } else {
-                continue;
-            }
-        }
-
-        uint16_t bg = isSelected ? (isConfirmButton ? RED : BLUE) : gray;
-        uint16_t fg = isSelected ? WHITE : (isConfirmButton ? RED : GREEN);
-
-        if (isSelected)
-            sprite1.fillRoundRect(8, y - 1, 224, lineHeight + 2, 3, bg);
-        sprite1.setTextColor(fg, bg);
-
-        sprite1.drawString(displayName, 14, y + 1);
-        y += lineHeight;
-    }
-
-    sprite1.pushSprite(0, 0);
-}
-
 void drawPlayer() {
     if (graphSpeed == 0) {
         gray = grays[15];
@@ -173,8 +93,8 @@ void drawPlayer() {
         sprite1.fillRect(4, 8, 130, 122, BLACK);
         sprite1.fillRect(129, 8, 5, 122, 0x0841);
 
-        if (fileCount > 0) {
-            sliderPos = map(selectedFileIndex, 0, max(1, fileCount - 1), 8, 110);
+        if (linksCount > 0) {
+            sliderPos = map(selectedFileIndex, 0, max(1, linksCount - 1), 8, 110);
         } else {
             sliderPos = 8;
         }
@@ -255,19 +175,19 @@ void drawPlayer() {
         sprite1.setTextFont(0);
         sprite1.setTextDatum(0);
         
-        if (fileCount == 0) {
+        if (linksCount == 0) {
             sprite1.setTextColor(RED, BLACK);
-            sprite1.drawString("No files found!", 8, 50);
+            sprite1.drawString("No links found!", 8, 50);
         } else {
-            if (fileCount <= VISIBLE_FILE_COUNT) {
+            if (linksCount <= VISIBLE_LINK_COUNT) {
                 viewStartIndex = 0;
-            } else if (viewStartIndex > fileCount - VISIBLE_FILE_COUNT) {
-                viewStartIndex = fileCount - VISIBLE_FILE_COUNT;
+            } else if (viewStartIndex > linksCount - VISIBLE_LINK_COUNT) {
+                viewStartIndex = linksCount - VISIBLE_LINK_COUNT;
             }
             int startIdx = viewStartIndex;
-            for (int i = 0; i < 10 && (startIdx + i) < fileCount; i++) {
+            for (int i = 0; i < 10 && (startIdx + i) < linksCount; i++) {
                 int idx = startIdx + i;
-                bool isNow = (idx == currentFileIndex);
+                bool isNow = (idx == currentLinkIndex);
                 bool isCursor = (idx == selectedFileIndex);
 
                 if (isNow) {
@@ -288,7 +208,7 @@ void drawPlayer() {
         }
 
         sprite1.setTextColor(grays[1], gray);
-        sprite1.drawString("MP3 Adv", 150, 4);
+        sprite1.drawString("WebAmp Adv", 150, 4);
         sprite1.setTextColor(grays[2], gray);
         sprite1.drawString("LIST", 58, 0);
         sprite1.setTextColor(grays[4], gray);
@@ -330,26 +250,30 @@ void drawPlayer() {
 
         sprite2.fillSprite(BLACK);
         sprite2.setTextColor(GREEN, BLACK);
-        if (!isStoped && fileCount > 0) {
-            sprite2.drawString(getFileName(currentFileIndex), textPos, 4);
+
+        if (!isStoped && linksCount > 0) {
+            sprite2.drawString(getFileName(currentLinkIndex), textPos, 4);
         }
+
         textPos -= 2;
-        if (textPos < -300) textPos = 90;
+
+        if (textPos < -300) {
+            textPos = 90;
+        }
         
         sprite2.pushSprite(&sprite1, 148, 59);
         sprite1.pushSprite(0, 0);
     }
     
     graphSpeed++;
-    if (graphSpeed == 4) graphSpeed = 0;
+
+    if (graphSpeed == 4) {
+        graphSpeed = 0;
+    }
 }
 
 void draw() {
-    if (currentUIState == UI_FOLDER_SELECT) {
-        drawFolderSelect();
-    } else {
-        drawPlayer();
-    }
+    drawPlayer();
 }
 
 void handleKeyPress(char key) {
@@ -366,112 +290,51 @@ void handleKeyPress(char key) {
         M5Cardputer.Display.setBrightness(M5Cardputer.Display.getBrightness() + brightnessStep);
         Serial.printf("Brightness: %d\n", M5Cardputer.Display.getBrightness());
     }
-    if (currentUIState == UI_FOLDER_SELECT) {
-        const bool hasParent = (currentFolder != "/");
-        const int baseParent = hasParent ? 1 : 0;
-        const int totalItems = baseParent + folderCount + 1;
-        const int confirmButtonIndex = totalItems - 1;
-
-        if (key == ';') {
-            selectedFolderIndex--;
-            if (selectedFolderIndex < 0) selectedFolderIndex = totalItems - 1;
-        } else if (key == '.') {
-            selectedFolderIndex++;
-            if (selectedFolderIndex >= totalItems) selectedFolderIndex = 0;
-        } else if (key == '\n') {
-            if (selectedFolderIndex == confirmButtonIndex) {
-                scanDirectory(currentFolder);
-                currentFileIndex = 0;
-                currentUIState = UI_PLAYER;
-                selectedFileIndex = currentFileIndex;
-                if (selectedFileIndex >= fileCount) selectedFileIndex = 0;
-                if (fileCount <= VISIBLE_FILE_COUNT) {
-                    viewStartIndex = 0;
-                } else {
-                    viewStartIndex = max(0, (int)currentFileIndex - (VISIBLE_FILE_COUNT / 2));
-                }
-                isPlaying = true;
-                isStoped = false;
-                textPos = 90;
-                trackStartMillis = millis();
-                playbackTime = 0;
-            }
-            else if (hasParent && selectedFolderIndex == 0) {
-                int lastSlash = currentFolder.lastIndexOf('/');
-                currentFolder = (lastSlash > 0) ? currentFolder.substring(0, lastSlash) : "/";
-                scanDirectory(currentFolder);
-                selectedFolderIndex = 0;
-            }
-            else {
-                int folderIndex = selectedFolderIndex - baseParent;
-                if (folderIndex >= 0 && folderIndex < folderCount) {
-                    currentFolder = availableFolders[folderIndex];
-                    scanDirectory(currentFolder);
-                    selectedFolderIndex = 0;
-                }
-            }
-        } else if (key == '`' || key == '\b') {
-            if (currentFolder != "/") {
-                int lastSlash = currentFolder.lastIndexOf('/');
-                currentFolder = (lastSlash > 0) ? currentFolder.substring(0, lastSlash) : "/";
-                scanDirectory(currentFolder);
-                selectedFolderIndex = 0;
-            }
-        }
-    } else {
-        if (key == '`' || key == '\b') {
-            audio.stopSong();
-            trackStartMillis = millis();
-            playbackTime = 0;
+    
+    if (key == 'a' || key == ' ') {
+        if (isPlaying && !isStoped) {
+            playbackTime = millis() - trackStartMillis;
             isPlaying = false;
             isStoped = true;
-            currentUIState = UI_FOLDER_SELECT;
-            selectedFolderIndex = 0;
-            scanDirectory("/");
-        } else if (key == 'a' || key == ' ') {
-            if (isPlaying && !isStoped) {
-                playbackTime = millis() - trackStartMillis;
-                isPlaying = false;
-                isStoped = true;
-            } else {
-                trackStartMillis = millis() - playbackTime;
-                isPlaying = true;
-                isStoped = false;
-            }
-        } else if (key == 'n' || key == '/' || key == 'p' || key == ',' || key == 'r' || key == '\n') {
-            if (fileCount == 0) {
-                return;
-            } else if (key == 'n' || key == '/') {
-                currentFileIndex = (currentFileIndex + 1) % fileCount;
-            } else if (key == 'p' || key == ',') {
-                currentFileIndex = (currentFileIndex == 0) ? (fileCount - 1) : (currentFileIndex - 1);
-            } else if (key == 'r') {
-                currentFileIndex = random(0, fileCount);
-            } else if (key == '\n') {
-                if (selectedFileIndex < fileCount) currentFileIndex = selectedFileIndex;
-            }
-            trackStartMillis = millis();
-            playbackTime = 0;
+        } else {
+            trackStartMillis = millis() - playbackTime;
             isPlaying = true;
             isStoped = false;
-            textPos = 90;
-            nextTrackRequest = true;
-        } else if (key == ';' || key == '.') {
-            if (fileCount > 0) {
-                if (key == ';') {
-                    selectedFileIndex = (selectedFileIndex == 0) ? (fileCount - 1) : (selectedFileIndex - 1);
-                } else {
-                    selectedFileIndex = (selectedFileIndex + 1) % fileCount;
-                }
+        }
+    } else if (key == 'n' || key == '/' || key == 'p' || key == ',' || key == 'r' || key == '\n') {
+        if (linksCount == 0) {
+            return;
+        } else if (key == 'n' || key == '/') {
+            currentLinkIndex = (currentLinkIndex + 1) % linksCount;
+        } else if (key == 'p' || key == ',') {
+            currentLinkIndex = (currentLinkIndex == 0) ? (linksCount - 1) : (currentLinkIndex - 1);
+        } else if (key == 'r') {
+            currentLinkIndex = random(0, linksCount);
+        } else if (key == '\n') {
+            if (selectedFileIndex < linksCount) currentLinkIndex = selectedFileIndex;
+        }
+        
+        trackStartMillis = millis();
+        playbackTime = 0;
+        isPlaying = true;
+        isStoped = false;
+        textPos = 90;
+        nextLinkRequest = true;
+    } else if (key == ';' || key == '.') {
+        if (linksCount > 0) {
+            if (key == ';') {
+                selectedFileIndex = (selectedFileIndex == 0) ? (linksCount - 1) : (selectedFileIndex - 1);
+            } else {
+                selectedFileIndex = (selectedFileIndex + 1) % linksCount;
+            }
 
-                if (fileCount <= VISIBLE_FILE_COUNT) {
-                    viewStartIndex = 0;
-                } else {
-                    if (selectedFileIndex < viewStartIndex) {
-                        viewStartIndex = selectedFileIndex;
-                    } else if (selectedFileIndex >= viewStartIndex + VISIBLE_FILE_COUNT) {
-                        viewStartIndex = selectedFileIndex - VISIBLE_FILE_COUNT + 1;
-                    }
+            if (linksCount <= VISIBLE_LINK_COUNT) {
+                viewStartIndex = 0;
+            } else {
+                if (selectedFileIndex < viewStartIndex) {
+                    viewStartIndex = selectedFileIndex;
+                } else if (selectedFileIndex >= viewStartIndex + VISIBLE_LINK_COUNT) {
+                    viewStartIndex = selectedFileIndex - VISIBLE_LINK_COUNT + 1;
                 }
             }
         }

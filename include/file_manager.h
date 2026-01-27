@@ -10,25 +10,26 @@
 #define SD_MOSI 14
 #define SD_CS 12
 
-#define MAX_FILES 100
+#define MAX_LINKS 100
 
-extern String audioFiles[MAX_FILES];
-extern uint8_t fileCount;
-extern uint8_t currentFileIndex;
-extern String currentFolder;
+#define MAX_NAME_LENGTH 30
+#define MAX_URL_LENGTH 100
 
-extern String availableFolders[];
-extern uint8_t folderCount;
+class AudioLinks {
+public:
+    String name;
+    String url;
+};
 
-extern bool isScanning;
-extern bool isScanningFiles;
-extern uint8_t scanProgress;
-extern uint8_t scanTotal;
+extern AudioLinks audioLinks[MAX_LINKS];
+
+extern uint8_t linksCount;
+extern uint8_t currentLinkIndex;
 
 extern SemaphoreHandle_t sdMutex;
 
-bool initSDCard();
-void scanDirectory(const String& folder);
+// bool initSDCard();
+// void getLinksList();
 String getFileName(uint8_t index);
 
 #endif

@@ -4,17 +4,11 @@
 #include <Arduino.h>
 #include "M5Cardputer.h"
 
-enum UIState {
-    UI_FOLDER_SELECT,
-    UI_PLAYER
-};
-
-extern UIState currentUIState;
 extern M5Canvas sprite1;
 extern M5Canvas sprite2;
 extern M5Canvas overlaySprite;
 
-extern bool nextTrackRequest;
+extern bool nextLinkRequest;
 
 extern uint8_t sliderPos;
 extern int16_t textPos;
