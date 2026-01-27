@@ -1,3 +1,12 @@
+Staroe Radio Music 128,https://www.staroeradio.ru/radio/music128
+Staroe Radio Kids 128,https://www.staroeradio.ru/radio/detskoe128
+Staroe Radio 128,https://www.staroeradio.ru/radio/ices128
+Staroe Radio Music 64,https://www.staroeradio.ru/radio/music64
+Staroe Radio Kids 64,https://www.staroeradio.ru/radio/detskoe64
+Staroe Radio 64,https://www.staroeradio.ru/radio/ices64
+Staroe Radio Music 32,https://www.staroeradio.ru/radio/music32
+Staroe Radio Kids 32,https://www.staroeradio.ru/radio/detskoe32
+Staroe Radio 32,https://www.staroeradio.ru/radio/ices32
 JAZZ GROOVE,http://audio-edge-5bkfj.fra.h.radiomast.io/8a384ff3-6fd1-4e5d-b47d-0cbefeffe8d7
 FLAIX FM,http://nodo02-cloud01.streaming-pro.com:8000/flaixfm.mp3
 LUXFUNK RADIO,http://188.165.11.30:5000/luxfunkradio.mp3
