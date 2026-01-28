@@ -171,6 +171,8 @@ void getLinksList()
   }
 
   file.close();
+  SD.end();
+  SPI.end();
 
   if (linksCount == 0)
   {

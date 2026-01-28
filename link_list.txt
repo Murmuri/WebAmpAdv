@@ -1,10 +1,26 @@
+Staroe Radio Music 128,https://www.staroeradio.ru/radio/music128
+Staroe Radio Kids 128,https://www.staroeradio.ru/radio/detskoe128
+Staroe Radio 128,https://www.staroeradio.ru/radio/ices128
+Staroe Radio Music 64,https://www.staroeradio.ru/radio/music64
+Staroe Radio Kids 64,https://www.staroeradio.ru/radio/detskoe64
+Staroe Radio 64,https://www.staroeradio.ru/radio/ices64
+Staroe Radio Music 32,https://www.staroeradio.ru/radio/music32
+Staroe Radio Kids 32,https://www.staroeradio.ru/radio/detskoe32
+Staroe Radio 32,https://www.staroeradio.ru/radio/ices32
+Komsomolskaya pravda Samara,https://kpradio.hostingradio.ru:8000/samara.radiokp128.mp3
+BFM SPB,https://bfmreg.hostingradio.ru/spb.bfm128.mp3 
+Kniga FM,http://bookradio.hostingradio.ru:8069/fm
+Kniga v sluh,https://radio-soyuz.ru:1045/stream
+Fantastic FM,https://listen9.myradio24.com/55699
+MDS,https://mds-station.com:8443/mds mds
+Umnoe FM,https://umnoe.amgradio.ru/Umnoe
+Mayak FM,https://icecast-vgtrk.cdnvideo.ru/mayakfm_mp3_128kbps
 JAZZ GROOVE,http://audio-edge-5bkfj.fra.h.radiomast.io/8a384ff3-6fd1-4e5d-b47d-0cbefeffe8d7
 Shaq Fu Radio,http://ais-edge148-pit01.cdnstream.com/2092_128.mp3
 Punkirratia.Net Euskadi,http://punkirratia.net:8000/punk
 La Rielera de Aguascalientes,http://ec3.yesstreaming.net:2810/stream
 Japan Only Hits,http://ais-edge91-dal03.cdnstream.com/2629_128.mp3
 Crucial Velocity Radio,http://ais-edge94-nyc04.cdnstream.com/1369_128
-Kniga FM,http://bookradio.hostingradio.ru:8069/fm
 Opera katolikus Radio,http://www.katolikusradio.hu:9000/opera 
 Make 80s great AGAIN,http://ais-edge147-dal03.cdnstream.com/2281_128.mp3
 Twente Gold - Fallout,http://c18.radioboss.fm:8403/autodj
