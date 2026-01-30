@@ -20,10 +20,10 @@ Inside the file, list your links using this exact format:
 
 ✨ Example Content
 ```
-[Lo-Fi Chill, https://example.com/lofi.mp3]
-[Classical Piano, https://example.com/piano.mp3]
-[Ambient Space, https://example.com/ambient.mp3]
-[Retro Wave, https://example.com/synthwave.mp3]
+Lo-Fi Chill, https://example.com/lofi.mp3
+Classical Piano, https://example.com/piano.mp3
+Ambient Space, https://example.com/ambient.mp3
+Retro Wave, https://example.com/synthwave.mp3
 ```
 
 ⚙️ Important Details
