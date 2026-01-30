@@ -1,11 +1,44 @@
-# Mini MP3 Player for Cardputer Adv
+#  Web Audio Player for Cardputer Adv
+Forked from sourcels/Mini-Mp3Player_Cardputer-Adv [https://github.com/sourcels/Mini-Mp3Player_Cardputer-Adv]
 
-This is fork from Moo93egy's repository: [CardPuter_Mp3_Adv](https://github.com/Moo93egy/CardPuter_Mp3_Adv)
+🎵 Custom Link List Setup for Webamp
+To use your personalized playlist, follow these steps:
 
-SD-Card is required
+📂 File Creation
+Navigate to the directory:
 
-## Changes:
-- Some code improvements
-- Optimization
-- Folder selection
-- Support for previous *M5Stack Cardputer* generations has been removed.
+```/webamp/```
+
+Create a text file named:
+
+```link_list.txt```
+
+📝 Format Specification
+Inside the file, list your links using this exact format:
+
+```[Track Name, https://link.to/audiofile.mp3]```
+
+✨ Example Content
+```
+[Lo-Fi Chill, https://example.com/lofi.mp3]
+[Classical Piano, https://example.com/piano.mp3]
+[Ambient Space, https://example.com/ambient.mp3]
+[Retro Wave, https://example.com/synthwave.mp3]
+```
+
+⚙️ Important Details
+
+Each link should be on a new line
+
+Track name enclosed in square brackets
+
+No spaces after comma (recommended)
+
+Supported formats: MP3, OGG, WAV
+
+File encoding must be UTF-8
+
+
+💡 Tip: Ensure your links point directly to audio files, not web pages with embedded players.
+
+Enjoy your customized music experience! 🎶
